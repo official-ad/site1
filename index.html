@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Redirecting...</title>
+
+  <!-- Ocultar TODO el contenido -->
+  <style>
+    html, body { 
+      display: none !important; 
+      margin: 0; padding: 0; 
+    }
+  </style>
+
+  <!-- Meta Pixel -->
+  <script>
+    const PIXEL_ID = '1748577809079876';
+    !function(f,b,e,v,n,t,s){
+      if(f.fbq) return; n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq) f._fbq=n; n.push=n; n.loaded=!0; n.version='2.0';
+      n.queue=[]; t=b.createElement(e); t.async=!0;
+      t.src=v; s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s);
+    }(window, document, 'script',
+      'https://connect.facebook.net/en_US/fbevents.js'
+    );
+    fbq('init', PIXEL_ID);
+    fbq('track', 'ViewContent');
+  </script>
+</head>
+<body>
+  <script>
+    const API_URL = 'https://mgyv1qqq11.execute-api.us-east-2.amazonaws.com/prod/1';
+    const whatsappNumbers = [
+  '5491171668758',
+  '5491156303793',
+  '5491170976354',
+  '5491171670533',
+  '5491125664757',
+  '5491171833556'
+];
+
+
+    const mensajeBase = 'Hola vengo por el 200%!';
+
+    function parseCookies() {
+      return document.cookie
+        .split('; ')
+        .reduce((c, kv) => {
+          const [name, ...v] = kv.split('=');
+          c[name] = v.join('=');
+          return c;
+        }, {});
+    }
+
+    function generateUUID() {
+      const bytes = new Uint8Array(16);
+      crypto.getRandomValues(bytes);
+      return Array.from(bytes)
+        .map(b => b.toString(16).padStart(2,'0'))
+        .join('');
+    }
+
+    function waitForCookie(name, timeout = 3000) {
+      return new Promise(res => {
+        const interval = 100;
+        let waited = 0;
+        const timer = setInterval(() => {
+          if (document.cookie.split('; ').some(c => c.startsWith(name + '=')) || waited >= timeout) {
+            clearInterval(timer);
+            res();
+          }
+          waited += interval;
+        }, interval);
+      });
+    }
+
+    window.addEventListener('load', async () => {
+      // 1) Esperamos a que Meta Pixel fije las cookies (máx. 3s)
+      await Promise.all([ waitForCookie('_fbc'), waitForCookie('_fbp') ]);
+
+      // 2) Leemos y construimos el payload
+      const cookies = parseCookies();
+      const id = generateUUID();
+      const payload = {
+        event:     'ViewContent',
+        timestamp: new Date().toISOString(),
+        _fbc:      cookies._fbc || null,
+        _fbp:      cookies._fbp || null,
+        id
+      };
+
+      // 3) Enviamos al API
+      fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .catch(() => {})
+      .finally(() => {
+        // 4) Redirección inmediata a WhatsApp
+        const num = whatsappNumbers[Math.floor(Math.random() * whatsappNumbers.length)];
+        const texto = `${mensajeBase} Mi código promocional es: ${id}`;
+        window.location.href = `https://wa.me/${num}?text=${encodeURIComponent(texto)}`;
+      });
+    });
+  </script>
+</body>
+</html>
